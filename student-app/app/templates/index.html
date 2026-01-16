@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>マナブの管理帳</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>📅 今日の予定</h1>
+
+    <div class="card">
+        <h3>➕ 新しい予定を追加</h3>
+        <form action="/add" method="post">
+            <input type="text" name="title" placeholder="予定のタイトル" required>
+            <input type="text" name="deadline" placeholder="締切 (例: 18:00)" required>
+            <button type="submit" class="btn">追加する</button>
+        </form>
+    </div>
+    <hr>
+    {% for task in tasks %}
+    <div class="card">
+        <h3>{{ task.title }}</h3>
+        <p>締切: <b>{{ task.deadline }}</b></p>
+        <p>出席回数: {{ task.attendance }}回</p>
+        <form action="/attend/{{ task.id }}" method="post">
+            <button type="submit" class="btn">📍 出席を記録</button>
+        </form>
+        <form action="/delete/{{ task.id }}" method="post" style="display: inline;">
+            <button type="submit" class="btn" style="background: #6c757d;">✅ 完了（消去）</button>
+        </form>
+    </div>
+    {% endfor %}
+</body>
+</html>
