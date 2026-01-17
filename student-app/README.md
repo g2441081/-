@@ -1,71 +1,52 @@
-マナブさん、エラーが出てしまいましたね！
-原因は、**システム構成図（Mermaid）の終わりの合図「 ``` 」と、その後の文章がくっついてしまったこと**です。
-
-Mermaidの図のコードの最後には、必ず「何もない行」を挟んでから次の文章を書く必要があります。
-
-修正した「貼り付け用コード」をもう一度作成しました。**今度はこの枠の中をまるごとコピーして、中身を全部入れ替えてみてください。**
-
----
-
-### `README.md` 貼り付け用（エラー修正済み）
-
-```markdown
-# 🎓 学生管理アプリ V1.8.9
-
+🎓 学生管理アプリ V1.8.9
 このアプリは、学生の日常的な課題管理と授業の出席回数記録を一つの画面で行える、Flask（Python）ベースのWebアプリケーションです。
 
-### システム構成図
+システム構成図
+コード スニペット
 
-```mermaid
 graph TD
     User((学生)) -->|操作| App[スマホアプリ]
     App -->|データ保存| DB[(データベース)]
     DB -->|通知| App
+🌟 主な機能
+課題・出席の一元管理: 授業ごとの出席回数と課題内容をサイドバーで素早く確認。
 
-```
+カレンダー連携: FullCalendarを使用し、締切日を月間カレンダー上で視覚的に把握。
 
-## 🌟 主な機能
+動的なステータス表示: 締切間近は赤（Urgent）、期限切れはグレーアウトして表示。
 
-* **課題・出席の一元管理**: 授業ごとの出席回数と課題内容をサイドバーで素早く確認。
-* **カレンダー連携**: FullCalendarを使用し、締切日を月間カレンダー上で視覚的に把握。
-* **動的なステータス表示**: 締切間近は赤（Urgent）、期限切れはグレーアウトして表示。
-* **Docker対応**: PostgreSQLを含む環境構築がコマンド一つで完了。
+Docker対応: PostgreSQLを含む環境構築がコマンド一つで完了。
 
-## 🛠 使用技術（Tech Stack）
+🛠 使用技術（Tech Stack）
+Backend: Python 3.11 / Flask / SQLAlchemy
 
-* **Backend**: Python 3.11 / Flask / SQLAlchemy
-* **Frontend**: HTML5 / CSS3 / JavaScript (FullCalendar v6)
-* **Database**: PostgreSQL 15
-* **Infrastructure**: Docker / Docker Compose
+Frontend: HTML5 / CSS3 / JavaScript (FullCalendar v6)
 
-## 🚀 実行方法
+Database: PostgreSQL 15
 
+Infrastructure: Docker / Docker Compose
+
+🚀 実行方法
 リポジトリをクローンした後、以下のコマンドで起動します。
 
-```bash
+Bash
+
 cd student-app
 docker compose up -d --build
+起動後、ブラウザで http://localhost:3000 にアクセスしてください。
 
-```
-
-起動後、ブラウザで `http://localhost:3000` にアクセスしてください。
-
-## 📂 成果物（Submission Items）
-
+📂 成果物（Submission Items）
 先生の指定に基づき、以下の成果物を同梱しています。
 
-* **実装コード**: `/student-app` 内に全てのソースコードを格納。
-* **デモ動画**: `demo_video.mp4` (リポジトリルートに配置)。
-* **プレゼンテーション資料**: `presentation.pdf` (リポジトリルートに配置)。
+実装コード: /student-app 内に全てのソースコードを格納。
 
-## 📝 技術的な工夫
+デモ動画: demo_video.mp4 (リポジトリルートに配置)。
 
-1. **コンテナオーケストレーションの最適化**:
-`depends_on` と `healthcheck` を設定し、データベースが完全に起動してからアプリケーションが接続を開始するように制御。起動時のエラーを防止しています。
-2. **データの永続化（Data Persistence）**:
-Dockerの `volumes` 設定により、コンテナを再起動してもデータが消えない構成にしています。
-3. **UI/UXの設計**:
-締切時刻を比較して、自動的に表示スタイルを切り替える機能を実装しました。
+プレゼンテーション資料: presentation.pdf (リポジトリルートに配置)。
 
-```
+📝 技術的な工夫
+コンテナオーケストレーションの最適化: depends_on と healthcheck を設定し、データベースが完全に起動してからアプリケーションが接続を開始するように制御。起動時のエラーを防止しています。
 
+データの永続化（Data Persistence）: Dockerの volumes 設定により、コンテナを再起動してもデータが消えない構成にしています。
+
+UI/UXの設計: 締切時刻を比較して、自動的に表示スタイルを切り替える機能を実装しました。
