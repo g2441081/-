@@ -1,27 +1,40 @@
 services:
+  # --- アプリケーション層：Flask (Python) サーバーの設定 ---
   app:
-    build: .
+    build: . # Dockerfileを読み込んで、アプリ専用の環境を構築
     ports:
-      - "3000:3000"
+      - "3000:3000" # 【外部接続】パソコンの3000番ポートから、コンテナ内のサーバーにアクセス可能にする
     volumes:
-      - ./app:/app
+      - ./app:/app # 【開発効率化】ローカルのファイルをコンテナと同期し、コード修正を即座に反映させる
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
-      - POSTGRES_HOST=db
+      - POSTGRES_HOST=db # 接続先DBを、下で定義しているサービス名「db」に指定
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy # DBがただ「立ち上がった」だけでなく「正常に受付可能」になるまで待機する設定
 
+  # --- データベース層：PostgreSQL の設定 ---
   db:
-    image: postgres:15
+    image: postgres:15 # 世界的に標準的なPostgreSQLのバージョン15を使用
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
+    # --- 重要：先生の資料にある「データの永続化」設定 ---
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # コンテナを破棄しても、入力したデータが消えないように保管
+    # --- --------------------------------------- ---
+    
+    # ヘルスチェック：DBが本当に起動してクエリを受け付けられるか自己診断する
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"] # DBの準備完了をコマンドで確認
+      interval: 5s   # 5秒おきにチェックを実行
+      timeout: 5s    # 応答待ちの期限
+      retries: 5     # 5回連続で失敗したら異常と判定
+
+# --- ボリューム（外部記憶領域）の定義 ---
+# コンテナの外側でデータを安全に保持するための名前付き領域
+volumes:
+  postgres_data:

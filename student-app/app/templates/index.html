@@ -1,38 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>マナブの管理帳</title>
+    <meta charset="UTF-8">
+    <title>学生管理アプリ V1.8.9</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        /* 画面全体固定：ブラウザのスクロールを無効化し、アプリのような操作感にする設定 */
+        html, body { 
+            height: 100vh; margin: 0; padding: 0; overflow: hidden; 
+            font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f2f5; color: #333; 
+        }
+
+        .wrapper {
+            display: flex; flex-direction: column; height: 100vh; padding: 10px 20px; box-sizing: border-box;
+        }
+
+        h1 { text-align: center; color: #007bff; margin: 5px 0; font-size: 1.5em; }
+
+        .main-layout {
+            display: flex; gap: 20px; flex: 1; min-height: 0; padding-bottom: 10px;
+        }
+
+        /* 左カラム：登録フォームとカレンダーを表示するエリア */
+        .left-column {
+            flex: 1.6; display: flex; flex-direction: column; gap: 15px; min-width: 0; height: 100%;
+        }
+
+        /* 右カラム：課題のリストを表示し、ここだけスクロール可能にする設定 */
+        .right-column {
+            flex: 1; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; height: 100%; min-width: 0;
+        }
+
+        .registration-card {
+            background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+
+        #calendar-container {
+            flex: 1; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 0; position: relative; overflow: hidden;
+        }
+
+        .task-list-header {
+            padding: 15px; border-bottom: 2px solid #007bff; margin: 0; flex-shrink: 0;
+        }
+
+        .task-scroll-area {
+            flex: 1; overflow-y: auto; padding: 0 15px 15px 15px;
+        }
+
+        /* 授業見出しと出席回数の表示スタイル */
+        .course-header { background: #007bff; color: white; padding: 12px; border-radius: 10px 10px 0 0; margin-top: 15px; }
+        .attendance-info { 
+            background: rgba(255,255,255,0.2); padding: 8px 12px; border-radius: 8px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-size: 1em; margin-top: 8px; font-weight: bold;
+        }
+
+        .task-item { background: white; padding: 15px; border-bottom: 1px solid #eee; border-left: 2px solid #007bff; border-right: 2px solid #007bff; }
+        .task-item:last-child { border-radius: 0 0 10px 10px; border-bottom: 2px solid #007bff; }
+        
+        /* 期限切れや緊急時の色分けスタイル */
+        .past-task { background: #f8f9fa; color: #aaa; border-left-color: #ccc; border-right-color: #ccc; }
+        .past-badge { background: #6c757d; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+        .urgent { border-left: 10px solid #ff4757 !important; background: #fffafb; }
+        .urgent-badge { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+        
+        .btn { border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-white { background: white; color: #007bff; font-size: 1.1em; }
+        .btn-unattend { background: rgba(255,255,255,0.3); color: white; font-size: 1.1em; }
+        .btn-blue { background: #007bff; color: white; width: 100%; padding: 10px; margin-top: 5px; }
+        .btn-delete { background: #f8d7da; color: #721c24; font-size: 0.8em; }
+
+        label { font-size: 0.8em; color: #555; font-weight: bold; }
+        input { padding: 10px; margin-bottom: 5px; border: 1px solid #ddd; border-radius: 6px; width: calc(100% - 22px); font-size: 0.9em; }
+        
+        /* カレンダー内イベント：文字はみ出し防止と独自ドットの設定 */
+        .fc-daygrid-event-dot { display: none !important; }
+        .fc-event-main { 
+            color: #333 !important; font-weight: bold; display: flex; align-items: center; 
+            font-size: 0.8em; overflow: hidden; width: 100%;
+        }
+        .my-custom-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+        .event-time { margin-right: 4px; color: #666; font-weight: normal; flex-shrink: 0; }
+        .event-title-span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
+        .fc-event { cursor: help; border: none !important; background: none !important; }
+
+        /* レスポンシブ設定：画面幅が狭い場合は縦並びにする */
+        @media (max-width: 800px) {
+            html, body { overflow: auto; height: auto; }
+            .wrapper { height: auto; }
+            .main-layout { flex-direction: column; height: auto; }
+            #calendar-container { min-height: 500px; }
+        }
     </style>
 </head>
 <body>
-    <h1>📅 今日の予定</h1>
+    <div class="wrapper">
+        <h1>🎓 学生管理アプリ V1.8.9</h1>
+        
+        <div class="main-layout">
+            <div class="left-column">
+                <div class="registration-card">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.1em;">➕ 新規登録</h3>
+                    <form action="/add" method="post" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 15px; align-items: end;">
+                        <div>
+                            <label>授業名</label>
+                            <input type="text" name="course" placeholder="例: 数学" required>
+                        </div>
+                        <div>
+                            <label>課題内容</label>
+                            <input type="text" name="title" placeholder="例: レポート">
+                        </div>
+                        <div>
+                            <label>締切日時</label>
+                            <input type="datetime-local" name="deadline">
+                        </div>
+                        <button type="submit" class="btn btn-blue" style="height: 40px; margin-bottom: 5px;">追加</button>
+                    </form>
+                </div>
+                <div id="calendar-container">
+                    <div id="calendar" data-events='{{ calendar_events | safe }}'></div>
+                </div>
+            </div>
 
-    <div class="card">
-        <h3>➕ 新しい予定を追加</h3>
-        <form action="/add" method="post">
-            <input type="text" name="title" placeholder="予定のタイトル" required>
-            <input type="text" name="deadline" placeholder="締切 (例: 18:00)" required>
-            <button type="submit" class="btn">追加する</button>
-        </form>
+            <div class="right-column">
+                <h3 class="task-list-header">📋 課題・出席リスト</h3>
+                <div class="task-scroll-area">
+                    {% set ns = namespace(current_course="") %}
+                    {% for task in tasks %}
+                        {% if task.course != ns.current_course %}
+                            <div class="course-header">
+                                <div style="font-weight: bold; font-size: 1.1em;">📚 {{ task.course }}</div>
+                                <div class="attendance-info">
+                                    <span>🏃 出席: {{ task.attendance }} 回</span>
+                                    <div style="display: flex; gap: 8px;">
+                                        <form action="/attend/{{ task.id }}" method="post" style="margin:0;"><button type="submit" class="btn btn-white">＋</button></form>
+                                        <form action="/unattend/{{ task.id }}" method="post" style="margin:0;"><button type="submit" class="btn btn-unattend">ー</button></form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% set ns.current_course = task.course %}
+                        {% endif %}
+
+                        {% set is_past = task.deadline and task.deadline < current_time_str %}
+                        <div class="task-item {% if is_past %}past-task{% elif task.deadline and task.deadline <= notification_limit %}urgent{% endif %}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1; min-width: 0;">
+                                    {% if task.title %}
+                                        <div style="font-weight: bold; font-size: 1em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            📝 {{ task.title }}
+                                            {% if is_past %}<span class="past-badge">終了</span>{% endif %}
+                                        </div>
+                                        <div style="font-size: 0.85em; color: #666; margin-top: 3px;">
+                                            締切: {{ task.deadline.replace('T', ' ') if task.deadline else '未設定' }}
+                                        </div>
+                                    {% else %}
+                                        <span style="color: #999; font-style: italic; font-size: 0.9em;">課題はありません</span>
+                                    {% endif %}
+                                </div>
+                                <form action="/delete/{{ task.id }}" method="post" style="margin:0; margin-left: 10px;">
+                                    {% if not task.title %}<input type="hidden" name="keep_course" value="false">{% endif %}
+                                    <button type="submit" class="btn btn-delete">{% if task.title %}完了{% else %}削除{% endif %}</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
-    <hr>
-    {% for task in tasks %}
-    <div class="card">
-        <h3>{{ task.title }}</h3>
-        <p>締切: <b>{{ task.deadline }}</b></p>
-        <p>出席回数: {{ task.attendance }}回</p>
-        <form action="/attend/{{ task.id }}" method="post">
-            <button type="submit" class="btn">📍 出席を記録</button>
-        </form>
-        <form action="/delete/{{ task.id }}" method="post" style="display: inline;">
-            <button type="submit" class="btn" style="background: #6c757d;">✅ 完了（消去）</button>
-        </form>
-    </div>
-    {% endfor %}
+
+    <script>
+        /* DOM読み込み完了後にカレンダーを初期化するスクリプト */
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            if (calendarEl && calendarEl.dataset.events) {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'ja',
+                    height: '100%',
+                    displayEventTime: true,
+                    eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                    events: JSON.parse(calendarEl.dataset.events),
+                    /* カレンダー上の各イベント（課題）の表示内容をカスタマイズする関数 */
+                    eventContent: function(arg) {
+                        let container = document.createElement('div');
+                        container.className = 'fc-event-main';
+                        
+                        let dot = document.createElement('div');
+                        dot.className = 'my-custom-dot';
+                        dot.style.backgroundColor = arg.event.backgroundColor;
+                        
+                        let timeSpan = document.createElement('span');
+                        timeSpan.className = 'event-time';
+                        timeSpan.innerText = arg.timeText;
+                        
+                        let titleSpan = document.createElement('span');
+                        titleSpan.className = 'event-title-span';
+                        titleSpan.innerText = arg.event.title;
+                        
+                        container.appendChild(dot);
+                        if (arg.timeText) container.appendChild(timeSpan);
+                        container.appendChild(titleSpan);
+                        
+                        return { domNodes: [container] };
+                    },
+                    /* イベントにマウスホバーした際のツールチップ設定 */
+                    eventDidMount: function(info) {
+                        info.el.setAttribute('title', info.event.title + (info.event.start ? ' (' + info.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ')' : ''));
+                    }
+                });
+                calendar.render();
+            }
+        });
+    </script>
 </body>
 </html>
