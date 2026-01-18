@@ -6,9 +6,13 @@
 
 ```mermaid
 graph TD
-    User((学生)) -->|操作| App[スマホアプリ]
-    App -->|データ保存| DB[(データベース)]
-    DB -->|通知| App
+    User((学生)) -->|操作| Web[Webブラウザ]
+    subgraph Docker環境
+        Web -->|アクセス| App[Python Flask]
+        App -->|データ保存| DB[(PostgreSQL)]
+    end
+    DB -->|情報取得| App
+    App -->|画面表示| Web
 
 ```
 
