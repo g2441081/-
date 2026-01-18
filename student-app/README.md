@@ -58,3 +58,10 @@ docker compose up -d --build
 Dockerの `volumes` 設定により、コンテナを再起動してもデータが消えない構成にしています。
 3. **UI/UXの設計**:
 締切時刻を比較して、自動的に表示スタイルを切り替える機能を実装しました。
+
+graph LR
+    subgraph Docker_Compose
+        Web[Python Flask Container] <--> |Internal Network| DB[(PostgreSQL Container)]
+        DB <--> Volume[(Docker Volume: Data Persistence)]
+    end
+    User((学生)) <--> |Browser / Port 3000| Web
